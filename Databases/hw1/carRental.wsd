@@ -1,0 +1,193 @@
+@startuml
+' hide the spot
+' hide circle
+
+' avoid problems with angled crows feet
+
+'last e: e13
+skinparam linetype ortho
+
+entity "VehicleRentals" as e01 {
+*vehicle_rental_id: bigint <<PK>>
+--
+date_from
+date_to
+destination
+vehicle_class <<FK>>
+feature_package <<FK>>
+customer <<FK>>
+rental_status <<FK>>
+}
+
+entity "RentalStatus" as e02 {
+*status_code: bigint <<PK>>
+--
+description
+}
+' ----------------------------
+'        RATES
+' ----------------------------
+entity "Rates" as e10 {
+    *rate_id
+    --
+    rate_type
+    rate_description
+    price
+
+}
+
+entity "Coverage" as e12 {
+    *coverage_id
+    --
+    coverage_type
+    coverage_description
+    price
+
+}
+
+entity "Accessories" as e13 {
+    *accessory_id
+    --
+    accessory_type
+    accessory_description
+    price
+
+}
+
+entity "FeaturesPackage" as e11 {
+    *package_id <<PK>>
+    --
+    *chosen_rate <<FK>>
+    chosen_coverage <<FK>>
+    chosen_accessory <<FK>>
+    total_price
+}
+
+' ----------------------------
+'        VEHICLES
+' ----------------------------
+
+entity "Model" as e14 {
+    *model_id <<PK>>
+    --
+    model_name
+    manufacturer
+    year
+}
+
+'Physical car, not viewed on site
+'Need to be considered to track availability
+'certain locations
+entity "Vehicle" as e06 {
+    *vehicle_id <<PK>>
+    --
+    mileage
+    model <<FK>>
+    engine_type
+    engine_size
+    rented
+    vehicle_type <<FK>>
+    vehicle_class <<FK>>
+    
+}
+
+'Class by budged: ecomony, small, premium
+entity "VehicleClass" as e07 {
+    *vehicle_class_id <<PK>>
+    --
+    class_name
+    class_picture
+    vehicle_type <<FK>>
+    minimum_driver_age
+}
+
+' Type: small, medium, premium 
+' Related to size
+entity "VehicleType" as e08 {
+    *vehicle_type_id <<PK>>
+    --
+    type_name
+    nr_of_seats
+    laggage_size
+    transmission_type
+}
+
+entity "Location" as e09 {
+    *location_id
+    --
+    location_code 
+    location_name
+}
+
+' ----------------------------
+'        CUSTOMERS
+' ----------------------------
+entity "Customer" as e03 {
+  *customer_id: bigint <<PK>>
+--
+  *name
+  *surname
+  *address <<FK>>
+  *phone
+  *email
+  *password
+flight_details
+  *payment_method <<FK>>
+}
+
+entity "Address" as e04 {
+  *address_id: bigint <<PK>>
+--
+address_line
+city
+postcode
+
+}
+
+entity "Payment" as e05 {
+*address_id: bigint <<PK>>
+--
+<<TO INVESTIGATE>>
+card_number
+cvv
+due_date
+owner_first_name
+owner_last_name
+
+}
+
+' Relations
+' Zero to One  |o--
+' Exactly one  ||--
+' Zero to many }o--
+' One or many  }|--
+
+' With Django we can have Many to many relationship
+
+'e02 }|..|{ e01
+
+'e03 }|..|| e02
+'e03 }|..|{ e05
+
+'e04 }|..|| e03
+'e04 }|..|| e01
+'e04 }|..|{ e05
+
+e03 ||..|{ e04
+e03 ||..|{ e01
+e03 ||..|{ e05
+e02 ||..|{ e01
+
+e01 ||..|{ e07
+e07 }|..|{ e08
+e08 ||..|{ e06
+
+e09 ||..|{ e06
+e07 }|..|{ e06
+e14 ||..|{ e06
+
+e11 ||..|{ e10
+e11 ||..|{ e12
+e11 ||..|{ e13
+e01 ||..|{ e11
+@enduml
