@@ -12,7 +12,8 @@ entity "VehicleRentals" as e01 {
 --
 date_from
 date_to
-destination
+location_id_from <<FK>
+location_id_to <<FK>>
 vehicle_class <<FK>>
 feature_package <<FK>>
 customer <<FK>>
@@ -97,7 +98,6 @@ entity "VehicleClass" as e07 {
     --
     class_name
     class_picture
-    vehicle_type <<FK>>
     minimum_driver_age
 }
 
@@ -179,7 +179,6 @@ e03 ||..|{ e05
 e02 ||..|{ e01
 
 e01 ||..|{ e07
-e07 }|..|{ e08
 e08 ||..|{ e06
 
 e09 ||..|{ e06
@@ -190,4 +189,6 @@ e11 ||..|{ e10
 e11 ||..|{ e12
 e11 ||..|{ e13
 e01 ||..|{ e11
+
+e09 }|..|| e01
 @enduml
