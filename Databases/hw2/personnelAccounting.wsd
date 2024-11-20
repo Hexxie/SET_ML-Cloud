@@ -1,0 +1,112 @@
+@startuml
+' hide the spot
+' hide circle
+
+' avoid problems with angled crows feet
+
+'last e: e1
+
+entity "Employee" as e01 {
+*employeet_id: <<PK>>
+--
+first_name
+second_name
+address <<FK>>
+jobTitle
+birthDate
+marital_status
+hire_date
+vacation_hours
+sickleave_hours
+salary_rate
+}
+
+entity "Address" as e02 {
+  *guid: <<PK>>
+--
+address_line
+city
+postcode
+}
+
+entity "TimeOff" as e03 {
+  *guid: <<PK>>
+--
+  *employeet_id: <<FK>>
+  *date_from
+  *date_to
+  reason_code <<FK>>
+}
+
+entity "TimeOffReason" as e04 {
+  *guid: <<PK>>
+--
+  *reason_code
+  reason_description
+}
+
+entity "EmployeeTimeTracking" as e05 {
+  *guid: <<PK>>
+--
+  *day_name <<FK>>
+  start_date_time
+  end_date_time
+  *task_traking <<FK>>
+}
+
+entity "Weekdays" as e06 {
+  *guid: <<PK>>
+--
+  *day_number
+  *day_name
+}
+
+entity "TaskTracking" as e07 {
+  *guid: <<PK>>
+--
+  *task <<FK>>
+  total_hours
+}
+
+entity "Task" as e08 {
+  *guid: <<PK>>
+--
+  *task_heder
+  task_description
+}
+
+entity "MonthlySalary" as e09 {
+  *guid: <<PK>>
+--
+  *total_working_hours
+  *salary_rate
+}
+
+
+' Relations
+' Zero to One  |o--
+' Exactly one  ||--
+' Zero to many }o--
+' One or many  }|--
+
+' With Django we can have Many to many relationship
+
+'e02 }|..|{ e01
+
+'e03 }|..|| e02
+'e03 }|..|{ e05
+
+'e04 }|..|| e03
+'e04 }|..|| e01
+'e04 }|..|{ e05
+
+e02 ||..|{ e01
+e03 }|..|| e01
+e03 }|..|| e04
+
+e01 ||..|{ e05
+e06 ||..|{ e05
+e07 }|..|{ e05
+e07 }|..|{ e08
+
+@enduml
