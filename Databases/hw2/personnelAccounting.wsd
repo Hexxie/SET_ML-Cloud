@@ -16,9 +16,9 @@ jobTitle
 birthDate
 marital_status
 hire_date
-vacation_hours
-sickleave_hours
-salary_rate
+time_off_id <<FK>>
+*salary <<FK>>
+*time_tracking <<FK>>
 }
 
 entity "Address" as e02 {
@@ -36,6 +36,8 @@ entity "TimeOff" as e03 {
   *date_from
   *date_to
   reason_code <<FK>>
+  vacation_hours
+  sickleave_hours
 }
 
 entity "TimeOffReason" as e04 {
@@ -78,7 +80,10 @@ entity "Task" as e08 {
 entity "MonthlySalary" as e09 {
   *guid: <<PK>>
 --
+  *employee_id <<FK>>
+  'how to say that total working hours would be a count
   *total_working_hours
+  *total_salary
   *salary_rate
 }
 
@@ -108,5 +113,7 @@ e01 ||..|{ e05
 e06 ||..|{ e05
 e07 }|..|{ e05
 e07 }|..|{ e08
+
+e09 ||..|{ e01
 
 @enduml
