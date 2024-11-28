@@ -1,0 +1,120 @@
+@startuml
+' hide the spot
+' hide circle
+
+' avoid problems with angled crows feet
+
+'last e: e9
+
+entity "Library" as e01 {
+*library_id <<PK>>
+--
+library_name
+library_description
+}
+
+entity "Address" as e02 {
+*address_id <<PK>>
+--
+country
+address_line
+city
+postcode
+}
+
+entity "LibraryMember" as e03 {
+*member_id <<PK>>
+--
+*address_id<<FK>>
+first_name
+last_name
+phone_number
+email_address
+}
+
+entity "MemberOwnership" as e09 {
+*member_ownership_id <<PK>>
+--
+*member_id <<FK>>
+*book_id <<FK>>
+start_rent_date
+finish_rent_date
+overdue_days
+}
+
+entity "Book" as e04 {
+*book_id <<PK>>
+--
+isbn
+book_title
+*category_id <<FK>>
+*author_id <<FK>>
+book_description
+
+}
+
+entity "Category" as e06 {
+*category_id <<PK>>
+--
+category_name
+category_description
+
+}
+
+entity "Author" as e07 {
+*author_id <<PK>>
+--
+author_first_name
+author_last_name
+
+}
+
+'how to name PK in промежуточной таблице
+entity "Book_by_author" as e08 {
+*book_by_author_id <<PK>>
+--
+*author_id <<FK>>
+*book_id <<FK>>
+}
+
+entity "Books_at_library" as e05 {
+*books_at_library_id <<PK>>
+--
+*book_id <<FK>>
+*library_id <<FK>>
+nr_books_available
+}
+
+
+' Relations
+' Zero to One  |o--
+' Exactly one  ||--
+' Zero to many }o--
+' One or many  }|--
+
+' With Django we can have Many to many relationship
+
+'e02 }|..|{ e01
+
+'e03 }|..|| e02
+'e03 }|..|{ e05
+
+'e04 }|..|| e03
+'e04 }|..|| e01
+'e04 }|..|{ e05
+
+
+e02 ||..|{ e03
+
+e05 }|..|| e01
+e05 }|..|| e04
+e06 }|..|| e04
+
+e07 ||..|{ e08
+e04 ||..|{ e08
+
+e04 ||..|{ e09
+e03 ||..|{ e09
+
+
+@enduml
