@@ -1,0 +1,448 @@
+-- Створюємо схему для організації таблиць
+CREATE SCHEMA AdventureDocuments; -- Схема групує таблиці логічно та спрощує управління доступом
+GO
+
+-- Створюємо таблицю для зберігання даних про документи з використанням Sparse columns
+CREATE TABLE AdventureDocuments.DocumentDetails (
+    DocumentID INT PRIMARY KEY, -- Унікальний ідентифікатор документа
+    Title NVARCHAR(200) NOT NULL, -- Назва документа, обов'язкове поле
+    Author NVARCHAR(100) NOT NULL, -- Автор документа, обов'язкове поле
+    Content NVARCHAR(MAX) SPARSE NULL, -- Основний текст документа, використовується SPARSE для оптимізації зберігання NULL
+    Tags NVARCHAR(100) SPARSE NULL, -- Теги документа, SPARSE допомагає економити місце для NULL значень
+    ReviewNotes NVARCHAR(200) SPARSE NULL -- Примітки рецензента, також SPARSE для оптимізації
+);
+GO
+
+-- Створюємо фільтрований індекс на колонці Tags
+CREATE NONCLUSTERED INDEX IX_DocumentDetails_Tags
+ON AdventureDocuments.DocumentDetails (Tags)
+WHERE Tags IS NOT NULL; -- Індекс включає лише рядки, де Tags не NULL, для покращення швидкодії запитів
+GO
+
+-- Вставляємо приклади даних у таблицю
+INSERT INTO AdventureDocuments.DocumentDetails (DocumentID, Title, Author, Content, Tags, ReviewNotes)
+VALUES
+(1, 'User Guide', 'John Doe', NULL, 'Manual,User', NULL), -- NULL значення в Content і ReviewNotes оптимізуються Sparse columns
+(2, 'Technical Specifications', 'Jane Smith', 'Details about the product...', 'Spec,Tech', 'Reviewed by QA'), -- Усі поля заповнені
+(3, 'Product Roadmap', 'Anna Brown', NULL, 'Roadmap,Plan', NULL), -- Тільки поле Tags заповнене
+(4, 'Release Notes', 'James White', NULL, 'Release,Updates', 'Approved'), -- Tags і ReviewNotes заповнені
+(5, 'Bug Report', 'Emily Davis', 'Critical issue in module X', NULL, NULL); -- Лише поле Content заповнене
+GO
+
+-- Вибірка всіх документів для перевірки вставки
+SELECT *
+FROM AdventureDocuments.DocumentDetails; -- Показує всі дані в таблиці
+GO
+
+-- Вибірка документів, у яких заповнено поле Tags
+SELECT DocumentID, Title, Tags
+FROM AdventureDocuments.DocumentDetails
+WHERE Tags IS NOT NULL; -- Запити стають ефективними завдяки фільтрованому індексу
+GO
+
+-- Вибірка документів, де поле Tags містить "Tech"
+SELECT DocumentID, Title, Tags
+FROM AdventureDocuments.DocumentDetails
+WHERE Tags LIKE '%Tech%'; -- Демонструє пошук по частковому збігу в колонці Tags
+GO
+
+-- Перевірка розміру сторінки для таблиці з Sparse columns
+EXEC sp_spaceused 'AdventureDocuments.DocumentDetails'; -- Аналізує використання пам'яті таблицею
+GO
+
+-- Видалення таблиці, коли більше не потрібна
+DROP TABLE IF EXISTS AdventureDocuments.DocumentDetails; -- Видаляє таблицю DocumentDetails
+GO
+
+-- Видалення схеми, якщо вона більше не використовується
+DROP SCHEMA IF EXISTS AdventureDocuments; -- Видаляє схему AdventureDocuments
+GO
+
+
+
+-- Отримання всіх доступних типів даних у SQL Server
+-- Використовується для перегляду як системних, так і користувацьких типів даних
+SELECT *
+FROM sys.types
+ORDER BY name;
+
+-- Пояснення:
+-- Цей запит повертає повну інформацію про типи даних, включаючи:
+-- - name: Назва типу даних
+-- - system_type_id: Унікальний ідентифікатор системного типу даних
+-- - user_type_id: Ідентифікатор користувацького типу даних (якщо є)
+-- - max_length: Максимальна довжина для даного типу
+-- - precision і scale: Параметри точності для числових типів
+-- - is_nullable: Чи дозволяє цей тип NULL-значення
+-- Використовуйте цей запит, щоб зрозуміти, які типи даних доступні у вашій базі даних.
+
+-- Вибірка тільки системних типів даних із ключовими характеристиками
+SELECT name, max_length, precision, scale, is_nullable
+FROM sys.types
+WHERE is_user_defined = 0 -- Тільки системні типи даних
+ORDER BY name;
+
+-- Пояснення:
+-- Цей запит показує інформацію лише про системні типи даних:
+-- - name: Назва типу (наприклад, int, varchar, decimal)
+-- - max_length: Максимальна довжина (у байтах або символах залежно від типу)
+-- - precision: Максимальна кількість цифр для числових типів
+-- - scale: Кількість знаків після коми для числових типів
+-- - is_nullable: Чи дозволяє тип значення NULL
+-- Він допомагає краще зрозуміти характеристики базових типів даних, які часто використовуються у проєктах.
+
+-- Зміна типу даних для стовпця Title
+ALTER TABLE AdventureDocuments.DocumentDetails
+ALTER COLUMN Title NVARCHAR(50) NULL;
+GO
+
+
+/*******************************************************************************************************************************/
+slides 5-6
+
+-- ### СТВОРЕННЯ СХЕМИ ###
+-- Створюємо схему для управління завданнями
+CREATE SCHEMA TaskManagement; -- Схема організовує таблиці логічно
+GO
+
+-- ### СТВОРЕННЯ ТАБЛИЦІ ###
+-- Таблиця для зберігання інформації про завдання
+CREATE TABLE TaskManagement.Tasks (
+    TaskID INT PRIMARY KEY, -- Унікальний ідентифікатор завдання (PRIMARY KEY)
+    TaskName NVARCHAR(200) NOT NULL, -- Назва завдання (NOT NULL)
+    AssignedTo NVARCHAR(100) NOT NULL, -- Кому призначене завдання (NOT NULL)
+    Deadline DATE NOT NULL, -- Дедлайн виконання завдання (NOT NULL)
+    Priority NVARCHAR(50) CHECK (Priority IN ('Low', 'Medium', 'High')), -- Пріоритет завдання (CHECK)
+    Status NVARCHAR(50) DEFAULT 'Pending', -- Статус завдання (DEFAULT)
+    Description NVARCHAR(MAX) SPARSE NULL -- Опис завдання (може бути NULL, SPARSE)
+);
+GO
+
+-- ### ДОДАВАННЯ ОБМЕЖЕНЬ ###
+-- Додаємо UNIQUE обмеження для забезпечення унікальності назв завдань
+ALTER TABLE TaskManagement.Tasks
+ADD CONSTRAINT UQ_Tasks_TaskName UNIQUE (TaskName);
+
+
+-- ### СТВОРЕННЯ ІНДЕКСІВ ###
+-- Індекс для поліпшення пошуку завдань за пріоритетом
+CREATE NONCLUSTERED INDEX IX_Tasks_Priority
+ON TaskManagement.Tasks (Priority);
+GO
+
+-- ### ДОДАВАННЯ ДАНИХ ###
+-- Вставляємо дані про завдання
+INSERT INTO TaskManagement.Tasks (TaskID, TaskName, AssignedTo, Deadline, Priority, Status, Description)
+VALUES
+    (1, 'Prepare presentation', 'John Doe', '2024-12-01', 'High', 'Pending', 'Prepare slides for the annual meeting'),
+    (2, 'Update website', 'Jane Smith', '2024-11-30', 'Medium', 'In Progress', 'Update content and design for the homepage'),
+    (3, 'Fix bugs in app', 'Anna Brown', '2024-12-05', 'High', 'Pending', 'Resolve critical issues reported by users'),
+    (4, 'Organize team meeting', 'James White', '2024-11-29', 'Low', NULL, 'Schedule and prepare agenda for the meeting'),
+    (5, 'Write report', 'Emily Davis', '2024-12-10', 'Medium', 'Pending', 'Draft the monthly performance report');
+
+-- ### ЗАПИТИ ДЛЯ ПЕРЕВІРКИ ###
+-- Отримуємо всі завдання
+SELECT * FROM TaskManagement.Tasks;
+
+-- Отримуємо завдання з високим пріоритетом
+SELECT TaskID, TaskName, Priority
+FROM TaskManagement.Tasks
+WHERE Priority = 'High';
+
+-- Отримуємо завдання, які мають дедлайн у майбутньому
+SELECT TaskID, TaskName, Deadline
+FROM TaskManagement.Tasks
+WHERE Deadline > GETDATE();
+
+-- ### ПЕРЕВІРКА РОЗМІРУ ТАБЛИЦІ ###
+-- Перевіряємо розмір таблиці
+EXEC sp_spaceused 'TaskManagement.Tasks';
+GO
+
+-- ### ВИДАЛЕННЯ ОБМЕЖЕНЬ ###
+
+-- Видалення UNIQUE обмеження
+ALTER TABLE TaskManagement.Tasks
+DROP CONSTRAINT UQ_Tasks_TaskName;
+
+-- ### ВИДАЛЕННЯ ТАБЛИЦІ ТА СХЕМИ ###
+-- Видалення таблиці
+DROP TABLE IF EXISTS TaskManagement.Tasks;
+
+-- Видалення схеми
+DROP SCHEMA IF EXISTS TaskManagement;
+GO
+
+
+/********************************************************************************************************************************/
+slide 7
+
+/*
+Ми створюємо структуру бази даних для управління клієнтами, постачальниками, продуктами, замовленнями, деталями замовлень і рухами товарів. 
+Кожна таблиця має свої унікальні обмеження, а також зв’язки між таблицями через зовнішні ключі. 
+Ось опис кожного кроку:
+
+1. Таблиця Customers:
+   - Містить дані про клієнтів, такі як ідентифікатор клієнта, ім'я, електронну пошту та телефон.
+   - Первинний ключ: CustomerID.
+   - Унікальне обмеження на поле Email.
+
+2. Таблиця Suppliers:
+   - Містить дані про постачальників, включаючи ідентифікатор постачальника, назву, контактну інформацію, адресу, місто і країну.
+   - Первинний ключ: SupplierID.
+   - Унікальне обмеження на поле Email.
+
+3. Таблиця Products:
+   - Містить дані про продукти, такі як ідентифікатор продукту, назва, ціна і кількість на складі.
+   - Первинний ключ: ProductID.
+   - Обмеження CHECK гарантує, що ціна і кількість не можуть бути меншими за 0.
+
+4. Таблиця Orders:
+   - Містить дані про замовлення, такі як ідентифікатор замовлення, клієнт, дата замовлення, сума замовлення і статус.
+   - Первинний ключ: OrderID.
+   - Зовнішній ключ: CustomerID, який зв’язує замовлення з клієнтом.
+   - Обмеження CHECK перевіряє, що сума замовлення не може бути меншою за 0, а статус має допустимі значення ('Pending', 'Completed', 'Cancelled').
+   - Обмеження DEFAULT автоматично встановлює поточну дату для поля OrderDate.
+
+5. Таблиця OrderDetails:
+   - Зберігає деталі кожного замовлення, такі як ідентифікатор, замовлення, продукт, кількість і загальна сума для продукту.
+   - Первинний ключ: OrderDetailID.
+   - Зовнішні ключі: OrderID (посилання на таблицю Orders), ProductID (посилання на таблицю Products).
+   - Обмеження CHECK перевіряє, що кількість і сума не можуть бути меншими за 0.
+
+6. Таблиця Movements:
+   - Відображає рух товарів, включаючи ідентифікатор, продукт, клієнта, постачальника, дату руху і кількість.
+   - Первинний ключ: MovementID.
+   - Зовнішні ключі: ProductID, ClientID, SupplierID (посилання на відповідні таблиці).
+   - Обмеження CHECK перевіряє, що кількість товару повинна бути більшою за 0.
+   - Обмеження DEFAULT автоматично встановлює поточну дату для поля MovementDate.
+
+7. Зовнішні ключі:
+   - Ми додаємо зовнішні ключі для таблиці Movements, які забезпечують зв’язок з таблицями Products, Customers і Suppliers.
+   - Ми перевіряємо правильність зв’язків через команду CHECK CONSTRAINT.
+
+Код нижче містить всі необхідні команди для створення цих таблиць і зв’язків.
+*/
+
+
+
+
+-- Таблиця Customers
+CREATE TABLE [dbo].[Customers] (
+    [CustomerID] INT NOT NULL, -- Унікальний ідентифікатор клієнта
+    [CustomerName] NVARCHAR(100) NOT NULL, -- Ім'я клієнта
+    [Email] NVARCHAR(100) UNIQUE, -- Унікальна електронна пошта клієнта
+    [Phone] NVARCHAR(20), -- Номер телефону клієнта
+    CONSTRAINT PK_Customers PRIMARY KEY CLUSTERED (CustomerID) -- Первинний ключ
+);
+GO
+
+-- Таблиця Suppliers
+CREATE TABLE [dbo].[Suppliers] (
+    [SupplierID] INT NOT NULL, -- Унікальний ідентифікатор постачальника
+    [SupplierName] NVARCHAR(100) NOT NULL, -- Назва постачальника
+    [ContactName] NVARCHAR(100) NOT NULL, -- Ім'я контактної особи
+    [Email] NVARCHAR(100) UNIQUE, -- Унікальна електронна пошта постачальника
+    [Phone] NVARCHAR(20), -- Номер телефону постачальника
+    [Address] NVARCHAR(250), -- Адреса постачальника
+    [City] NVARCHAR(50), -- Місто
+    [Country] NVARCHAR(50), -- Країна
+    CONSTRAINT PK_Suppliers PRIMARY KEY CLUSTERED (SupplierID) -- Первинний ключ
+);
+GO
+
+-- Таблиця Products
+CREATE TABLE [dbo].[Products] (
+    [ProductID] INT NOT NULL, -- Унікальний ідентифікатор продукту
+    [ProductName] NVARCHAR(100) NOT NULL, -- Назва продукту
+    [Price] DECIMAL(10, 2) NOT NULL CHECK (Price >= 0), -- Ціна продукту, не може бути меншою за 0
+    [StockQuantity] INT NOT NULL CHECK (StockQuantity >= 0), -- Кількість на складі, не може бути меншою за 0
+    CONSTRAINT PK_Products PRIMARY KEY CLUSTERED (ProductID) -- Первинний ключ
+);
+GO
+
+-- Таблиця Orders
+CREATE TABLE [dbo].[Orders] (
+    [OrderID] INT NOT NULL, -- Унікальний ідентифікатор замовлення
+    [CustomerID] INT NOT NULL, -- Ідентифікатор клієнта
+    [OrderDate] DATETIME NOT NULL CONSTRAINT DF_Orders_OrderDate DEFAULT (GETDATE()), -- Дата замовлення, значення за замовчуванням - поточна дата
+    [TotalAmount] DECIMAL(10, 2) NOT NULL CHECK (TotalAmount >= 0), -- Загальна сума замовлення, не може бути меншою за 0
+    [Status] NVARCHAR(50) NOT NULL CHECK (Status IN ('Pending', 'Completed', 'Cancelled')), -- Статус замовлення з перевіркою на допустимі значення
+    CONSTRAINT PK_Orders PRIMARY KEY CLUSTERED (OrderID), -- Первинний ключ
+    CONSTRAINT FK_Orders_Customers FOREIGN KEY (CustomerID) REFERENCES [dbo].[Customers] (CustomerID) -- Зовнішній ключ
+);
+GO
+
+-- Таблиця OrderDetails
+CREATE TABLE [dbo].[OrderDetails] (
+    [OrderDetailID] INT NOT NULL, -- Унікальний ідентифікатор запису деталей замовлення
+    [OrderID] INT NOT NULL, -- Зовнішній ключ, пов'язаний із замовленням
+    [ProductID] INT NOT NULL, -- Зовнішній ключ, пов'язаний із продуктом
+    [Quantity] INT NOT NULL CHECK (Quantity > 0), -- Кількість продукту в замовленні
+    [LineTotal] DECIMAL(10, 2) NOT NULL CHECK (LineTotal >= 0), -- Загальна сума для продукту
+    CONSTRAINT PK_OrderDetails PRIMARY KEY CLUSTERED (OrderDetailID), -- Первинний ключ
+    CONSTRAINT FK_OrderDetails_Orders FOREIGN KEY (OrderID) REFERENCES [dbo].[Orders] (OrderID), -- Зв’язок з таблицею Orders
+    CONSTRAINT FK_OrderDetails_Products FOREIGN KEY (ProductID) REFERENCES [dbo].[Products] (ProductID) -- Зв’язок з таблицею Products
+);
+GO
+
+
+/****************************************************************************************************************************************************/
+
+-- Таблиця Movements
+CREATE TABLE [dbo].[Movements] (
+    [MovementID] INT NOT NULL, -- Унікальний ідентифікатор руху
+    [ProductID] INT NOT NULL, -- Зовнішній ключ для зв'язку з таблицею Products
+    [CustomerID] INT NULL, -- Зовнішній ключ для зв'язку з таблицею Customers (може бути NULL, якщо клієнт невідомий)
+    [SupplierID] INT NULL, -- Зовнішній ключ для зв'язку з таблицею Suppliers (може бути NULL, якщо постачальник невідомий)
+    [MovementDate] DATETIME NOT NULL CONSTRAINT DF_Movements_MovementDate DEFAULT (GETDATE()), -- Дата руху товару, значення за замовчуванням - поточна дата
+    [Quantity] INT NOT NULL CHECK (Quantity > 0), -- Кількість товару повинна бути більшою за 0
+    CONSTRAINT PK_Movements PRIMARY KEY CLUSTERED (MovementID), -- Первинний ключ
+
+);
+GO
+
+-- Зовнішній ключ для зв’язку з таблицею Products
+ALTER TABLE [dbo].[Movements]
+ADD CONSTRAINT FK_Movements_Products FOREIGN KEY (ProductID)
+REFERENCES [dbo].[Products] (ProductID);
+
+-- Зовнішній ключ для зв’язку з таблицею Customers
+ALTER TABLE [dbo].[Movements]
+ADD CONSTRAINT FK_Movements_Customers FOREIGN KEY (CustomerID)
+REFERENCES [dbo].[Customers] (CustomerID);
+
+-- Зовнішній ключ для зв’язку з таблицею Suppliers
+ALTER TABLE [dbo].[Movements]
+ADD CONSTRAINT FK_Movements_Suppliers FOREIGN KEY (SupplierID)
+REFERENCES [dbo].[Suppliers] (SupplierID);
+
+-- Перевірка правильності зв'язків (цілісність даних)
+ALTER TABLE [dbo].[Movements]
+CHECK CONSTRAINT FK_Movements_Products;
+
+ALTER TABLE [dbo].[Movements]
+CHECK CONSTRAINT FK_Movements_Customers;
+
+ALTER TABLE [dbo].[Movements]
+CHECK CONSTRAINT FK_Movements_Suppliers;
+
+ALTER TABLE Orders DROP CONSTRAINT FK_Orders_Customers;
+
+****************************************************************************************************************************************************
+
+
+-- 1. Дроп FOREIGN KEY
+DECLARE @sql NVARCHAR(MAX) = N'';
+
+SELECT @sql += 'ALTER TABLE [' + OBJECT_SCHEMA_NAME(parent_object_id) + '].[' + OBJECT_NAME(parent_object_id) + '] DROP CONSTRAINT [' + name + '];' + CHAR(13)
+FROM sys.foreign_keys;
+
+EXEC sp_executesql @sql;
+
+-- 2. Дроп PRIMARY KEY
+SET @sql = N'';
+
+SELECT @sql += 'ALTER TABLE [' + OBJECT_SCHEMA_NAME(parent_object_id) + '].[' + OBJECT_NAME(parent_object_id) + '] DROP CONSTRAINT [' + name + '];' + CHAR(13)
+FROM sys.key_constraints
+WHERE type = 'PK';
+
+EXEC sp_executesql @sql;
+
+-- 3. Дроп UNIQUE обмежень
+SET @sql = N'';
+
+SELECT @sql += 'ALTER TABLE [' + OBJECT_SCHEMA_NAME(object_id) + '].[' + OBJECT_NAME(object_id) + '] DROP CONSTRAINT [' + name + '];' + CHAR(13)
+FROM sys.objects
+WHERE type = 'UQ';
+
+EXEC sp_executesql @sql;
+
+-- 4. Дроп CHECK обмежень
+SET @sql = N'';
+
+SELECT @sql += 'ALTER TABLE [' + OBJECT_SCHEMA_NAME(parent_object_id) + '].[' + OBJECT_NAME(parent_object_id) + '] DROP CONSTRAINT [' + name + '];' + CHAR(13)
+FROM sys.check_constraints;
+
+EXEC sp_executesql @sql;
+
+-- 5. Дроп DEFAULT обмежень
+SET @sql = N'';
+
+SELECT @sql += 'ALTER TABLE [' + OBJECT_SCHEMA_NAME(parent_object_id) + '].[' + OBJECT_NAME(parent_object_id) + '] DROP CONSTRAINT [' + name + '];' + CHAR(13)
+FROM sys.default_constraints;
+
+EXEC sp_executesql @sql;
+
+
+DECLARE @sql NVARCHAR(MAX) = N'';
+
+-- Знаходимо всі таблиці в базі даних
+SELECT @sql += 'DROP TABLE [' + SCHEMA_NAME(schema_id) + '].[' + name + '];' + CHAR(13)
+FROM sys.tables;
+
+-- Виконуємо дроп таблиць
+EXEC sp_executesql @sql;
+
+
+/*********************************************************************************************************************/
+
+slide 9
+
+-- Створення таблиці з автоінкрементом
+CREATE TABLE dbo.doc_exz_identity (
+    id_num INT IDENTITY(1,1), -- Поле з автоінкрементом
+    column_a INT, -- Звичайний числовий стовпець
+    column_b DATETIME DEFAULT GETDATE() -- Дата і час за замовчуванням
+);
+
+-- Вставка даних у таблицю
+INSERT INTO dbo.doc_exz_identity (column_a) -- column_b заповнюється автоматично
+VALUES 
+(100), -- column_a = 100
+(200), -- column_a = 200
+(300); -- column_a = 300
+
+-- Вибір даних із таблиці
+SELECT * FROM dbo.doc_exz_identity;
+
+/*****************************************************************************************************************************************/
+
+-- Створення таблиці з GUID
+CREATE TABLE dbo.doc_exz_guid (
+    guid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(), -- Поле з унікальним GUID
+    column_a INT, -- Звичайний числовий стовпець
+    column_b DATETIME DEFAULT GETDATE() -- Дата і час за замовчуванням
+);
+
+-- Вставка даних у таблицю
+INSERT INTO dbo.doc_exz_guid (column_a) -- guid і column_b заповнюються автоматично
+VALUES 
+(400), -- column_a = 400
+(500), -- column_a = 500
+(600); -- column_a = 600
+
+-- Вибір даних із таблиці
+SELECT * FROM dbo.doc_exz_guid;
+
+/**************************************************************************************************************************************/
+
+-- Створення таблиці з NEWSEQUENTIALID
+CREATE TABLE dbo.doc_exz_sequential_guid (
+    guid UNIQUEIDENTIFIER NOT NULL DEFAULT NEWSEQUENTIALID(), -- Послідовний GUID
+    column_a INT, -- Звичайний числовий стовпець
+    column_b DATETIME DEFAULT GETDATE() -- Дата і час за замовчуванням
+);
+
+-- Вставка даних у таблицю
+INSERT INTO dbo.doc_exz_sequential_guid (column_a) -- guid і column_b заповнюються автоматично
+VALUES 
+(700), -- column_a = 700
+(800), -- column_a = 800
+(900); -- column_a = 900
+
+-- Вибір даних із таблиці
+SELECT * FROM dbo.doc_exz_sequential_guid;
+
+
+DROP TABLE dbo.doc_exz_guid, dbo.doc_exz_identity, dbo.doc_exz_sequential_guid;
