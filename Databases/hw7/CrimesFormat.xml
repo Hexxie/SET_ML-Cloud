@@ -1,0 +1,24 @@
+14.0
+22
+1       SQLCHAR             0       21      ","      1     ID                                   ""
+2       SQLCHAR             0       8       ","      2     CaseNumber                           SQL_Latin1_General_CP1_CI_AS
+3       SQLCHAR             0       24      ","      3     Date                                 ""
+4       SQLCHAR             0       50      ","      4     Block                                SQL_Latin1_General_CP1_CI_AS
+5       SQLCHAR             0       10      ","      5     IUCR                                 SQL_Latin1_General_CP1_CI_AS
+6       SQLCHAR             0       50      ","      6     PrimaryType                          SQL_Latin1_General_CP1_CI_AS
+7       SQLCHAR             0       100     ","      7     Description                          SQL_Latin1_General_CP1_CI_AS
+8       SQLCHAR             0       100     ","      8     LocaLDescription                     SQL_Latin1_General_CP1_CI_AS
+9       SQLCHAR             0       5       ","      9     Arrest                               SQL_Latin1_General_CP1_CI_AS
+10      SQLCHAR             0       5       ","      10    Domestic                             SQL_Latin1_General_CP1_CI_AS
+11      SQLCHAR             0       7       ","      11    Beat                                 ""
+12      SQLCHAR             0       5       ","      12    District                             ""
+13      SQLCHAR             0       5       ","      13    Ward                                 ""
+14      SQLCHAR             0       5       ","      14    CommunityArea                        ""
+15      SQLCHAR             0       3       ","      15    FBICode                              SQL_Latin1_General_CP1_CI_AS
+16      SQLCHAR             0       12      ","      16    XCoordinate                          ""
+17      SQLCHAR             0       12      ","      17    YCoordinate                          ""
+18      SQLCHAR             0       11      ","      18    Year                                 ""
+19      SQLCHAR             0       24      ","      19    UpdatedOn                            ""
+20      SQLCHAR             0       41      ","      20    Latitude                             ""
+21      SQLCHAR             0       41      ","      21    Longitude                            ""
+22      SQLCHAR             0       50      "\n"   22    Location                             SQL_Latin1_General_CP1_CI_AS
