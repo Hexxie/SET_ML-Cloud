@@ -12,7 +12,6 @@ SET ListPrice=1
 FROM [Production].Product price
 WHERE ProductID=1
 
-BEGIN TRAN
 COMMIT TRAN
 
 
