@@ -38,6 +38,10 @@ SELECT *
 FROM NYCTaxiService.dbo.tbl_raw_data
 WHERE PassengerCount IS NULL
 
+SELECT *
+FROM NYCTaxiService.dbo.tbl_raw_data
+WHERE PassengerCount > 8
+
 -- Перевірка відстані
 SELECT *
 FROM NYCTaxiService.dbo.tbl_raw_data
@@ -117,6 +121,11 @@ WHERE FareAmount IS NULL OR
 SELECT *
 FROM NYCTaxiService.dbo.tbl_raw_data
 WHERE ImprovementSupercharge <> 0.3
+ORDER BY PickupDatetime
+
+SELECT *
+FROM NYCTaxiService.dbo.tbl_raw_data
+WHERE ImprovementSupercharge = 0.3
 
 SELECT *
 FROM NYCTaxiService.dbo.tbl_raw_data
@@ -128,4 +137,35 @@ WHERE TollsAmount < 0
 
 SELECT *
 FROM NYCTaxiService.dbo.tbl_raw_data
+WHERE TotalAmount < 0
+
+SELECT *
+FROM NYCTaxiService.dbo.tbl_raw_data
 WHERE AirportFee <> 1.25
+
+-- Пошук дублікованих записів за Case_Number
+SELECT ImprovementSupercharge, COUNT(*) AS Duplicate_Count
+FROM NYCTaxiService.dbo.tbl_raw_data
+GROUP BY ImprovementSupercharge
+HAVING COUNT(*) > 1;
+
+-- Пошук дублікатів де ImprovementSupercharge - негативне
+SELECT 
+    a.PickupDatetime AS PickupDatetime_A,
+    a.DropoffDatetime AS DropoffDatetime_A,
+    a.PassengerCount AS PassengerCount_A,
+    a.TripDistance AS TripDistance_A,
+    a.ImprovementSupercharge AS ImprovementSupercharge_A,
+    b.PickupDatetime AS PickupDatetime_B,
+    b.DropoffDatetime AS DropoffDatetime_B,
+    b.PassengerCount AS PassengerCount_B,
+    b.TripDistance AS TripDistance_B,
+    b.ImprovementSupercharge AS ImprovementSupercharge_B
+FROM NYCTaxiService.dbo.tbl_raw_data a
+INNER JOIN NYCTaxiService.dbo.tbl_raw_data b
+ON a.PickupDatetime = b.PickupDatetime
+   AND a.DropoffDatetime = b.DropoffDatetime
+   AND a.TripDistance = b.TripDistance
+   AND a.PassengerCount = b.PassengerCount
+   AND a.ImprovementSupercharge = -b.ImprovementSupercharge
+ORDER BY a.PickupDatetime;
