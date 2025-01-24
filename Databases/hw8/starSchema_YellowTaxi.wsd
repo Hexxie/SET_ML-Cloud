@@ -1,0 +1,104 @@
+@startuml
+' hide the spot
+' hide circle
+
+' avoid problems with angled crows feet
+
+'last e: e1
+
+entity "taxi_trip_fact" as e01 {
+*trip_id: <<PK>>
+--
+' cabin class
+passenger_count: <<tinyint>> 
+--
+' trip
+trip_distance: <<numeric>>
+pickup_datetime_id: <<FK>>
+taxi_zone_pickup_id: <<FK>>
+taxi_zone_dropoff_id: <<FK>>
+dropoff_datetime_id: <<FK>>
+rate_id: <<FK>>
+--
+'price
+payment_type_id: <<FK>>
+fare_amount: <<numeric>>
+extra: <<numeric>>
+mta_tax: <<numeric>>
+improvement_surcharge: <<numeric>>
+tip_amount: <<numeric>>
+tolls_amount: <<numeric>>
+total_amount: <<numeric>>
+congestion_surcharge: <<numeric>>
+airport_fee: <<numeric>>
+total_price: <<numeric>>
+--
+'other
+vendor_id: <<FK>>
+store_flag_id: <<FK>>
+}
+
+entity "vendor_dim" as e02 {
+    *vendor_id: <<PK>>
+    --
+    description: varchar
+}
+
+entity "datetime_dim" as e03 {
+    *datetime_id: <<PK>>
+    --
+    full_datetime: datetime,
+	day: tinyint,
+	month: tinyint,
+	year: smallint,
+	hour: tinyint,
+	minute: tinyint,
+	second: tinyint,
+	day_of_week: tinyint,
+	day_name: varchar
+}
+
+entity "rate_dim" as e04 {
+    *rate_code_id: <<PK>>
+    --
+    description: varchar
+}
+
+entity "taxi_zone_dim" as e05 {
+    *taxi_zone_id: <<PK>>
+    --
+    borough: varchar
+    zone_name: varchar
+    service_zone: varchar
+}
+
+entity "payment_type_dim" as e06 {
+    *payment_type_id: <<PK>>
+    --
+    description: varchar
+}
+
+entity "store_flag_dim" as e07 {
+    *store_flag_id: <<PK>>
+    --
+    description: varchar
+}
+
+
+
+' Relations
+' Zero to One  |o--
+' Exactly one  ||--
+' Zero to many }o--
+' One or many  }|--
+
+e02 ||..|{ e01
+e03 ||..|{ e01
+e04 ||..|{ e01
+e05 ||..|{ e01
+e06 ||..|{ e01
+e07 ||..|{ e01
+
+
+
+@enduml
