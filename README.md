@@ -4,6 +4,10 @@ This is the place where I'll share my homeworks and notes during study in [SET U
 
 ## Courses in progress
 - Databases
-- Innovation Technologies
-- Intro to Cloud
-- Python
+- Machine Learning
+- Enterpreneurship
+
+## Finished in progress
+- Innovation Technologies - FINISHED
+- Intro to Cloud - FINISHED
+- Python - FINISHED
